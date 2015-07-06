@@ -16,9 +16,12 @@ const schema = {
   }
 };
 
-prompt.message = '>'.green;
-prompt.delimiter = ' ';
-prompt.colors = false;
+
+Object.assign(prompt, {
+  message: '>'.green,
+  delimiter: ' ',
+  colors: false
+});
 prompt.start();
 
 
