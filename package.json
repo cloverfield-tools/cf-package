@@ -1,0 +1,38 @@
+{
+  "name": "cf-package",
+  "version": "0.0.1",
+  "description": "Cloverfield Package Scaffold",
+  "main": "index.js",
+  "bin": {
+    "cf-package": "index.js"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:cloverfield-tools/cf-package.git"
+  },
+  "keywords": [
+    "cloverfield",
+    "scaffold",
+    "cloverfield-scaffold",
+    "package"
+  ],
+  "author": "Nik Butenko <nik@butenko.me>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/cloverfield-tools/cf-package/issues"
+  },
+  "homepage": "https://github.com/cloverfield-tools/cf-package",
+  "dependencies": {
+    "babel": "^5.6.14",
+    "nomnom": "^1.8.1",
+    "prompt": "^0.2.14"
+  },
+  "devDependencies": {
+    "babel-eslint": "^3.1.21",
+    "eslint": "^0.24.0"
+  }
+}
