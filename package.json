@@ -14,7 +14,7 @@
     "cov:clean": "rimraf coverage",
     "cov:generate": "babel-node `npm bin`/isparta cover --report text --report html test",
     "validate": "npm run lint && npm test",
-    "audit": "nsp audit-shrinkwrap",
+    "audit": "nsp package",
     "check": "npm run lint && npm test && npm run audit && npm outdated --depth 0"
   },
   "repository": {
@@ -35,6 +35,7 @@
   "homepage": "https://github.com/cloverfield-tools/cf-package",
   "dependencies": {
     "babel": "^5.8.21",
+    "handlebars": "^3.0.3",
     "nomnom": "^1.8.1",
     "prompt": "^0.2.14"
   },
