@@ -4,7 +4,7 @@
   "description": "Cloverfield Package Scaffold",
   "main": "index.js",
   "bin": {
-    "cf-package": "index.js"
+    "cf-package": "build/cli.js"
   },
   "scripts": {
     "lint": "eslint .",
@@ -15,7 +15,10 @@
     "cov:generate": "babel-node `npm bin`/isparta cover --report text --report html test",
     "validate": "npm run lint && npm test",
     "audit": "nsp package",
-    "check": "npm run lint && npm test && npm run audit && npm outdated --depth 0"
+    "check": "npm run lint && npm test && npm run audit && npm outdated --depth 0",
+    "prebuild": "rimraf build",
+    "build": "babel lib --out-dir build",
+    "prepublish": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -35,7 +38,9 @@
   "homepage": "https://github.com/cloverfield-tools/cf-package",
   "dependencies": {
     "babel": "^5.8.21",
+    "glob": "^5.0.14",
     "handlebars": "^3.0.3",
+    "mkdirp": "^0.5.1",
     "nomnom": "^1.8.1",
     "prompt": "^0.2.14"
   },
@@ -44,7 +49,6 @@
     "blue-tape": "^0.1.10",
     "eslint": "^1.1.0",
     "faucet": "0.0.1",
-    "glob": "^5.0.14",
     "isparta": "^3.0.3",
     "nsp": "^1.0.3",
     "precommit-hook": "^3.0.0",
