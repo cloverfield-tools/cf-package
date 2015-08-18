@@ -1,6 +1,6 @@
 {
   "name": "cf-package",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Cloverfield Package Scaffold",
   "main": "index.js",
   "bin": {
