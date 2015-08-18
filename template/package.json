@@ -55,6 +55,6 @@
   "homepage": "https://github.com/{{user.github}}/{{package.name}}",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nkbt/flux-common-store.git"
+    "url": "https://github.com/{{user.github}}/{{package.name}}.git"
   }
 }

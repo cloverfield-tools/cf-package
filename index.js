@@ -9,37 +9,9 @@ import generate from './lib/generate';
 import fs from 'fs';
 import mkdirp from 'mkdirp';
 import path from 'path';
+import {properties, defaults} from './lib/properties';
 
-
-const date = new Date();
-const defaults = {
-  date: {
-    day: date.getDate(),
-    month: date.getMonth(),
-    fullYear: date.getFullYear()
-  },
-  user: {
-    name: '',
-    github: '',
-    email: ''
-  },
-  package: {
-    name: '',
-    description: ''
-  }
-};
-
-
-const schema = {
-  properties: {
-    'package.name': {
-      description: 'Package name: ',
-      pattern: /^[a-z]+[a-z\-_]+$/,
-      message: 'Name must be only letters, numbers, dashes and underscores',
-      required: true
-    }
-  }
-};
+const schema = {properties};
 
 
 Object.assign(prompt, {
