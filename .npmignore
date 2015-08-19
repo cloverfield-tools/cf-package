@@ -1,9 +1,8 @@
-lib
-coverage
-test
-.eslintignore
-.eslintrc
-.gitignore
+/lib
+/coverage
+/test
+.eslint*
 .jshint*
+.gitignore
 .npmignore
 circle.yml
