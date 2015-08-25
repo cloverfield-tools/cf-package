@@ -2,7 +2,7 @@
   "name": "cf-package",
   "version": "0.1.0",
   "description": "Cloverfield Package Scaffold",
-  "main": "index.js",
+  "main": "build/cli.js",
   "bin": {
     "cf-package": "build/cli.js"
   },
