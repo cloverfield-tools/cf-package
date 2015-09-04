@@ -43,7 +43,7 @@ Here's a [real issue](https://github.com/woothemes/woocommerce/issues/8563#issue
 * Clone your fork of the repo to your dev system
 
 ```
-git clone git@github.com:{{user.github}}/{{project.name}}.git
+git clone git@github.com:{{user.github}}/{{package.name}}.git
 ```
 
 ### If there's no issue, please create one
