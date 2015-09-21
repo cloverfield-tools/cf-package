@@ -13,6 +13,8 @@ It scaffolds a new module with the following features:
 * Ensure dependencies are properly declared in package.json
 * Git precommit hook enforces quality checks on commit
 * CI config (Travis, CircleCI)
+* [A contributing guide](template/docs/contributing/index.md)
+* An assortment of useful npm scripts
 
 
 ## Getting Started
