@@ -38,6 +38,7 @@
   "homepage": "https://github.com/cloverfield-tools/cf-package",
   "dependencies": {
     "babel": "^5.8.23",
+    "cli-color": "^1.0.0",
     "glob": "^5.0.14",
     "handlebars": "^4.0.0",
     "mkdirp": "^0.5.1",
