@@ -7,6 +7,10 @@
     "es6": true
   },
 
+  "plugins": [
+    "react"
+  ],
+
   "ecmaFeatures": {
     "arrowFunctions": true,
     "binaryLiterals": true,
@@ -33,6 +37,9 @@
   },
 
   "rules": {
+    "react/jsx-uses-react": 2,
+    "react/jsx-uses-vars": 2,
+    "react/react-in-jsx-scope": 2,
     "block-scoped-var": [0],
     "brace-style": [2, "1tbs", {"allowSingleLine": true}],
     "camelcase": [0],
@@ -152,7 +159,7 @@
     "no-void": [0],
     "no-warning-comments": [0, {"terms": ["todo", "fixme", "xxx"], "location": "start"}],
     "no-with": [2],
-    "no-extra-parens": [2],
+    "no-extra-parens": [0],
     "one-var": [0],
     "operator-assignment": [0, "always"],
     "operator-linebreak": [2, "after"],
