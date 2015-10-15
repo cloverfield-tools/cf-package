@@ -51,7 +51,7 @@
     "faucet": "0.0.1",
     "isparta": "^3.0.4",
     "nsp": "^1.1.0",
-    "precommit-hook": "^3.0.0",
+    "pre-commit": "^1.1.1",
     "rimraf": "^2.4.3",
     "sinon": "^1.16.1",
     "tap-xunit": "^1.1.1"

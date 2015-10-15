@@ -4,7 +4,6 @@
   "version": "1.0.0",
   "main": "build/index.js",
   "scripts": {
-    "init": "rimraf .validate.json && rimraf .jshintrc",
     "clean": "rimraf build",
     "lint": "eslint source test",
     "prebuild": "npm run clean",
@@ -45,7 +44,7 @@
     "isparta": "^3.0.3",
     "node-libs-browser": "^0.5.2",
     "nsp": "^1.0.3",
-    "precommit-hook": "^3.0.0",
+    "pre-commit": "^1.1.1",
     "rimraf": "^2.4.2",
     "webpack": "^1.11.0"
   },
