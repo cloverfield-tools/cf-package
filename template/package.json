@@ -4,7 +4,6 @@
   "version": "1.0.0",
   "main": "build/index.js",
   "scripts": {
-    "init": "rimraf .validate.json && rimraf .jshintrc",
     "clean": "rimraf build",
     "lint": "eslint source test",
     "prebuild": "npm run clean",
@@ -25,11 +24,10 @@
     "deps:missing": "dependency-check package.json",
     "deps:extra": "dependency-check package.json --extra --no-dev --ignore",
     "precheck": "npm run validate",
-    "check": "npm run audit && npm run deps && npm outdated --depth 0"
+    "check": "npm run audit && npm run deps && npm outdated --depth 0",
+    "precommit": "npm run lint",
+    "prepush": "npm run validate"
   },
-  "pre-commit": [
-    "lint"
-  ],
   "devDependencies": {
     "babel": "^5.8.21",
     "babel-eslint": "^4.0.5",
@@ -42,10 +40,10 @@
     "eslint-loader": "^1.0.0",
     "eslint-plugin-react": "^2.3.0",
     "faucet": "0.0.1",
+    "husky": "^0.10.1",
     "isparta": "^3.0.3",
     "node-libs-browser": "^0.5.2",
     "nsp": "^1.0.3",
-    "precommit-hook": "^3.0.0",
     "rimraf": "^2.4.2",
     "webpack": "^1.11.0"
   },
