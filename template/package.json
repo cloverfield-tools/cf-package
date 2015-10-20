@@ -16,7 +16,7 @@
     "test": "babel-node test/index.js",
     "cov": "npm run cov:clean && npm run cov:generate",
     "cov:clean": "rimraf coverage",
-    "cov:generate": "babel-node node_modules/.bin/isparta cover --report text --report html test/index.js",
+    "cov:generate": "babel-node node_modules/isparta/bin/isparta cover --report text --report html test/index.js",
     "prepublish": "npm run build",
     "validate": "npm run lint && npm run build && npm test",
     "validate-dev": "npm run lint && npm run build && npm test | faucet",
