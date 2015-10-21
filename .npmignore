@@ -2,7 +2,6 @@
 /coverage
 /test
 /.eslint*
-/.jshint*
 /.gitignore
 /.npmignore
 /circle.yml
