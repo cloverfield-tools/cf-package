@@ -57,6 +57,8 @@
     "husky": "^0.10.1",
     "isparta": "^3.0.4",
     "nsp": "^2.0.2",
+    "package-merge": "^0.1.2",
+    "precommit-hook": "^3.0.0",
     "rimraf": "^2.4.3",
     "sinon": "^1.16.1",
     "tap-xunit": "^1.1.1"
