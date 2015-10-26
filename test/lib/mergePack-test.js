@@ -45,5 +45,7 @@ test('Merge Packages', t => {
   t.deepEqual(JSON.parse(merger), mergedFile,
     'should merge an existing package.json with template and return results');
 
+  t.ok(merger.match(/\s\s/), 'merged package should be formatted with spaces');
+
   t.end();
 });
