@@ -45,6 +45,7 @@
     "cli-color": "^1.0.0",
     "glob": "^5.0.14",
     "handlebars": "^4.0.0",
+    "lodash.merge": "^3.3.2",
     "mkdirp": "^0.5.1",
     "nomnom": "^1.8.1",
     "prompt": "^0.2.14"
@@ -58,7 +59,6 @@
     "isparta": "^3.0.4",
     "nsp": "^2.0.2",
     "package-merge": "^0.1.2",
-    "precommit-hook": "^3.0.0",
     "rimraf": "^2.4.3",
     "sinon": "^1.16.1",
     "tap-xunit": "^1.1.1"
