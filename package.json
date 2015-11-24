@@ -38,7 +38,9 @@
   },
   "homepage": "https://github.com/cloverfield-tools/cf-package",
   "dependencies": {
-    "babel": "^5.8.23",
+    "babel-cli": "^6.2.0",
+    "babel-core": "^6.0.0",
+    "babel-polyfill": "^6.2.0",
     "cli-color": "^1.0.0",
     "glob": "^5.0.14",
     "handlebars": "^4.0.0",
