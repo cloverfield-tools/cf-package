@@ -39,7 +39,11 @@ module.exports = {
     loaders: [
       {
         test: /\.js$/,
-        loaders: ['babel?plugins=object-assign'],
+        loader: 'babel',
+        query: {
+          presets: ['es2015', 'stage-1'],
+          plugins: ['transform-object-assign']
+        },
         include: path.resolve('./source')
       }
     ]
