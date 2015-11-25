@@ -27,3 +27,12 @@ test('Should support object spread', (assert) => new Promise((resolve) => {
 
   resolve();
 }));
+
+test('Should support object assign', (assert) => new Promise((resolve) => {
+  const defaults = {x: 1, y: 2, z: 3};
+  const options = Object.assign(defaults, {w: 0, x: 11})
+
+  assert.deepEqual(options, {w: 0, x: 11, y: 2, z: 3});
+
+  resolve();
+}));
