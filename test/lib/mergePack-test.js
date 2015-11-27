@@ -7,27 +7,27 @@ test('Merge Packages', t => {
   const packPath = path.join(process.cwd(), 'package.json');
   const templatedFile = JSON.stringify({
     name: 'templatePackage',
-    description: 'This should overwrite stuff',
+    description: 'This should not overwrite stuff',
     main: 'src/index.js',
     scripts: {
-      start: 'do a lotta stuff',
+      start: 'do a lotta new stuff',
       test: 'mocha this package'
     }
   });
   const originalFile = {
     name: 'originalPackage',
-    description: 'This should be overwritten by a template',
+    description: 'This should not be overwritten by a template',
     scripts: {
-      start: 'do a lotta stuff',
+      start: 'do a lotta old stuff',
       lint: 'lint this package'
     }
   };
   const mergedFile = {
-    name: 'templatePackage',
-    description: 'This should overwrite stuff',
+    name: 'originalPackage',
+    description: 'This should not be overwritten by a template',
     main: 'src/index.js',
     scripts: {
-      start: 'do a lotta stuff',
+      start: 'do a lotta old stuff',
       lint: 'lint this package',
       test: 'mocha this package'
     }
