@@ -74,6 +74,15 @@ git commit -m '[Issue #<your-issue-number>] <short description of change>'
 
 Please don't merge your own changes. Create a pull request so others can review the changes.
 
+**Before you submit:**
+
+Before you submit a pull request from your forked repo, check that it meets these guidelines:
+
+* If the pull request fixes a bug, it should include tests that fail without the changes, and pass with them.
+* If the pull request adds functionality, the docs should be updated as part of the same PR.
+* Please rebase and resolve all conflicts before submitting.
+
+
 **Push changes:**
 
 ```
