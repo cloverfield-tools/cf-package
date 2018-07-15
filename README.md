@@ -2,6 +2,10 @@
 
 Cloverfield Package Scaffold
 
+# Status - Deprecated
+
+This package is not being actively maintained.
+
 ## What does this do?
 
 It scaffolds a new module with the following features:
