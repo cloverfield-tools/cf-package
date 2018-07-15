@@ -28,11 +28,11 @@
     "precommit": "npm run lint",
     "prepush": "npm run validate"
   },
-  "devDependencies": {
+  "devDependencies":  {
     "babel-cli": "^6.2.0",
     "babel-core": "^6.0.0",
     "babel-preset-es2015": "^6.1.18",
-    "babel-preset-stage-1":"^6.0.0",
+    "babel-preset-stage-1": "^6.0.0",
     "babel-eslint": "^4.0.5",
     "babel-loader": "^6.0.0",
     "babel-plugin-transform-object-assign": "^6.1.18",
