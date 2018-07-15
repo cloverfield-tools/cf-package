@@ -28,7 +28,7 @@ npm install
 npm test
 ```
 
-### Input via propmt:
+### Input via prompt:
 
 ```sh
 cf-package
