@@ -6,7 +6,7 @@
 
 **Core Competitive Advantage**: Physics-grounded world model that ensures generated content follows real-world causality, dynamics, and constraints—not just visual or linguistic patterns.
 
-**"SOTA in Weight Class"** means: Best performance among models with 4-10B parameters that can be fine-tuned on consumer hardware (≤128GB RAM, ≤10GB VRAM with QLoRA).
+**"SOTA in Weight Class"** means: Best performance among models with 4-10B parameters that can be trained from scratch on Apple M4 Max (≤128GB unified memory).
 
 ### Target Users
 
@@ -31,9 +31,9 @@
 
 ### Size Constraints
 - **Parameter count**: 6B parameters (target)
-- **Training hardware**: Apple M4 Max (48GB-128GB unified memory)
-- **Fine-tuning**: QLoRA on consumer GPUs (≤10GB VRAM)
-- **Inference**: Efficient enough for edge deployment (M-series, consumer GPUs)
+- **Training hardware**: Apple M4 Max 128GB unified memory (50-60GB footprint during training)
+- **Training approach**: From scratch with novel SPCE architecture (not compatible with pretrained weights)
+- **Inference**: Efficient enough for edge deployment (M-series, consumer GPUs, <10GB VRAM with quantization)
 
 ### Competitive Weight Class
 Models in the 4-10B parameter range:

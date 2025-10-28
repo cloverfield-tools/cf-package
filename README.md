@@ -95,6 +95,19 @@ This teaches the model a **world model**—how reality works—enabling it to ge
 
 **Key property:** Full NLU capability is maintained because we use full O(w²) cross-attention within the window—every token can attend to every other token. SPCE phase rotation provides continuous temporal coordinates that enhance cross-modal alignment without compromising semantic understanding.
 
+**SPCE's unique advantage: Window size flexibility**
+
+Unlike RoPE (which learns position-based patterns), SPCE uses absolute time coordinates:
+- Model learns temporal relationships: "events 1 second apart relate in these ways"
+- NOT position relationships: "position 100 relates to position 15000 in these ways"
+
+This enables:
+- **Variable window training**: Randomly sample 4K, 8K, 16K, 32K per batch
+- **Flexible inference**: Same weights work with any window size
+- **Task-adaptive performance**: 4K for real-time holodeck, 32K for complex editing
+
+You cannot do this with RoPE/LLaMA/Mistral—changing their window size breaks learned attention patterns. SPCE's temporal encoding is window-agnostic.
+
 ### 2. Visual Text Encoding (DeepSeek OCR Approach)
 
 **Lesson from DeepSeek:** Text as compressed visual tokens achieves 10× compression with 97% fidelity.
@@ -138,7 +151,7 @@ Efficient local attention with SPCE phase rotation. Full O(w²) cross-attention 
 
 **Why small windows work:** The three-tier retrieval architecture + SSM carry means we don't need massive windows for long-range understanding:
 - **Tier 1 (windowed attention)**: Handles immediate context with full O(w²) cross-attention
-- **Tier 2 (RETRO retrieval)**: Pulls in relevant physics knowledge
+- **Tier 2 (RETRO retrieval)**: Pulls in relevant examples (scenes, dialogue, code patterns)
 - **Tier 3 (kNN retrieval)**: Perfect recall of exact tokens from unbounded history
 - **SSM carry**: Low-frequency phase coherence maintains narrative/conversational state across windows
 
@@ -244,10 +257,11 @@ The inference engine maintains state across conversations and supports **low-ran
 ### Curriculum
 
 **Stage 1: Text-to-image with dialogue** (static scenes, foundation for visual understanding)
-- Pretrained LLM backbone (LLaMA 3 8B or Mistral 7B)
+- Train 6B parameters from scratch with SPCE architecture
+- Random initialization, variable window training (4K-32K randomly sampled per batch)
 - Unreal Engine rendered scenes with natural language descriptions
 - Synchronized audio narration and ambient sound
-- Focus: Cross-modal alignment, visual grounding, material/lighting understanding
+- Focus: Cross-modal alignment, visual grounding, material/lighting understanding, NLU bootstrapping
 
 **Stage 2: Dynamic scenes and interaction** (temporal understanding)
 - Unreal Engine: Character movement, object interactions, environmental changes
@@ -386,29 +400,30 @@ if t % keyframe_interval == 0:
 
 ## Implementation Roadmap
 
-### Phase 1: SPCE Validation (1–2 months)
-- Implement shared ω atoms + per-head gates in MLX/PyTorch
+### Phase 1: SPCE Validation
+- Implement shared ω atoms + per-head gates in MLX
 - Compare SPCE vs RoPE on audio-only task (music beat prediction)
 - **Success criterion**: SPCE should exceed RoPE due to higher information density (continuous time + shared cross-modal frequencies + explicit phase offsets)
 
-### Phase 2: Text-to-Image Foundation (2–3 months)
-- Start from pretrained LLM (LLaMA 3 8B or Mistral 7B)
-- Add visual encoder/decoder, train on Unreal Engine scenes
-- Test on instruction-following: "Generate a cozy coffee shop"
-- **Success criterion**: Physically plausible image generation matching Stable Diffusion quality
+### Phase 2: Base Model Training (Stage 1 Curriculum)
+- Train 6B parameters from scratch on M4 Max 128GB
+- Random initialization, SPCE + windowed attention from day 1
+- Variable window training (4K-32K randomly sampled per batch)
+- ~10B tokens of curated UE synthetic data (text-to-image with dialogue)
+- **Training time estimate**: 3-6 months continuous on M4 Max
+- **Success criterion**: Text-to-image generation matching Stable Diffusion quality, basic NLU capability
 
-### Phase 3: Temporal & Editing Capabilities (3–6 months)
-- Add video generation and editing pathways
-- Train on multi-turn instruction-edit tasks
-- Implement real-time generation for interactive experiences
-- **Success criterion**: Successful instruct-edit ("Give Mom a Christmas sweater") + 8-sec video generation
+### Phase 3: Temporal & Editing Capabilities (Stages 2-3)
+- Continue training with video sequences and instruction-edit examples
+- **Training time**: Additional 2-4 months
+- **Success criterion**: 8-second video generation + instruct-edit ("Give Mom a Christmas sweater")
 
-### Phase 4: Conversational AI & Interactive Worlds (6–12 months)
-- Scale to 6B parameters with QLoRA on M4 Max
-- Train on conversational datasets with visual grounding
-- Implement real-time world generation (holodeck prototype)
-- Mix synthetic (Unreal) + real-world licensed data
-- **Success criterion**: Natural multi-turn dialogue with AI avatars + navigable generated environments
+### Phase 4: Conversational AI & Interactive Worlds (Stage 4)
+- Add conversational training data and real-world augmentation
+- **Training time**: Additional 2-4 months
+- **Success criterion**: Natural multi-turn dialogue with AI avatars + navigable generated environments (holodeck prototype)
+
+**Total training time: 7-14 months on M4 Max 128GB** (continuous, assuming quality synthetic data pipeline established)
 
 ---
 
@@ -497,19 +512,24 @@ Total per window: O(w² + w·log(n) + d_ssm)
 
 **Example (4-hour video @ 100 tokens/sec):**
 - n = 400,000 tokens (full context)
-- w = 4K-32K tokens (task-dependent window)
+- Model trained with variable windows (4K-32K), can use any at inference
 
 **Standard attention:**
 - 400K² = 160 billion ops per layer
 - 52 GB memory (KV cache)
 
-**Cloverfield with 16K window (typical for video understanding):**
+**Cloverfield with 16K window** (same model, typical for video understanding):
 - Window attention: 16K² = 256 million ops
 - RETRO retrieval: 250 chunks × 5 neighbors × encode = ~1.25M ops
 - kNN search: 16K × log(400K) ≈ 290K ops (FAISS)
 - SSM update: 512 ops
 - **Total: ~258M ops per layer (620× reduction!)**
 - **Memory: 2.1 GB window + index (25× reduction in active memory)**
+
+**Cloverfield with 4K window** (same model, real-time holodeck):
+- Window attention: 4K² = 16 million ops
+- **Total: ~17M ops per layer (9,400× reduction!)**
+- **16× faster than 16K window for real-time applications**
 
 **Key insight:** Retrieval cost is negligible compared to attention savings.
 
@@ -551,13 +571,17 @@ Total per window: O(w² + w·log(n) + d_ssm)
 - **Limitation:** Weak at in-context learning (copying tasks)
 
 **Cloverfield:**
-- Flexible window: O(w²) = 16K² = 256M ops per layer (example using 16K)
-- SSM carry: O(d_ssm) per window shift = 256 ops
-- Total per window: ~256M ops (constant!)
-- Number of windows: n/w = 400K/16K = 25 windows
-- Total: 25 × 256M = 6.4B ops (vs 160B for standard attention)
-- **25× reduction in total ops** (scales with window choice)
-- Memory: Constant O(w² + d_ssm)
+- Variable window training enables flexible inference window choice
+- **With 16K window** (video understanding):
+  - O(w²) = 16K² = 256M ops per layer
+  - Total: 25 windows × 256M = 6.4B ops
+  - **25× reduction vs standard attention**
+- **With 4K window** (real-time holodeck):
+  - O(w²) = 4K² = 16M ops per layer
+  - Total: 100 windows × 16M = 1.6B ops
+  - **100× reduction vs standard attention**
+- SSM carry: O(d_ssm) per window shift = 256 ops (negligible)
+- Memory: Constant O(w²) regardless of total sequence length
 
 #### 5. Memory Footprint
 
@@ -574,18 +598,22 @@ For 6B model (32 layers, 400K tokens, 32 heads, 128 dim, fp16):
 Memory = window_cache + SSM_state
 Window cache = n_layers × w × n_heads × head_dim × 2 × 2
 
-For 16K window (typical video understanding):
+For 16K window (video understanding):
 = 32 × 16384 × 32 × 128 × 2 × 2
 = 2.1 GB (constant, independent of video length!)
+
+For 4K window (real-time holodeck):
+= 32 × 4096 × 32 × 128 × 2 × 2
+= 0.5 GB (even faster, lower memory)
 
 SSM state = n_layers × d_ssm × 2
 = 32 × 512 × 2
 = 33 KB (negligible!)
 
-Total: ~2.1 GB (constant, regardless of hours of video processed)
+Total: 0.5-2.1 GB depending on window choice (constant per window)
 ```
 
-**Savings: 52 GB → 2.1 GB = 25× reduction in active memory**
+**Savings: 52 GB → 0.5-2.1 GB = 25-100× reduction in active memory**
 
 #### 6. Throughput Estimates
 
@@ -705,13 +733,13 @@ Total: ~2.1 GB (constant, regardless of hours of video processed)
 
 ### ✅ Technically Feasible
 
-**Hardware**: 6B model trainable on M4 Max 128GB with QLoRA
+**Hardware**: 6B model trainable from scratch on M4 Max 128GB (50-60GB training footprint)
 
 **Data**: Unreal Engine enables unlimited synthetic training data with perfect ground truth (lighting, materials, physics)
 
-**Architecture**: Built on proven components (RoPE-like kernels, RETRO retrieval, Mamba SSM)
+**Architecture**: Built on proven components (SPCE extends RoPE concepts, RETRO retrieval, Mamba SSM)
 
-**Timeline**: 6-8 months to holodeck prototype with staged implementation
+**Training time**: 7-14 months continuous on M4 Max to reach holodeck prototype capability
 
 ### ✅ Unique Advantages
 
