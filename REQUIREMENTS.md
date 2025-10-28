@@ -6,7 +6,24 @@
 
 **Core Competitive Advantage**: Physics-grounded world model that ensures generated content follows real-world causality, dynamics, and constraints—not just visual or linguistic patterns.
 
-**"SOTA in Weight Class"** means: Best performance among models with 4-10B parameters that can be fine-tuned on consumer hardware (≤64GB RAM, ≤10GB VRAM with QLoRA).
+**"SOTA in Weight Class"** means: Best performance among models with 4-10B parameters that can be fine-tuned on consumer hardware (≤128GB RAM, ≤10GB VRAM with QLoRA).
+
+### Target Users
+
+**Creative Professionals:**
+- Image/video editors seeking natural language editing ("Give Mom a Christmas sweater")
+- Game developers needing asset generation and scene creation
+- Content creators wanting AI avatars and interactive storytelling
+
+**Software Builders:**
+- Developers using code generation with visual context
+- Unity/Unreal developers seeking automated scene/effect creation
+
+**Consumer Applications:**
+- Interactive AI conversations with visual avatars
+- Exploratory experiences in AI-generated virtual worlds (holodeck vision)
+
+**Long-term vision**: Real-time generation and exploration of interactive virtual environments—holodeck on a laptop. Users can converse with AI characters, generate and modify scenes on-the-fly, and explore persistent worlds that maintain physical consistency.
 
 ---
 

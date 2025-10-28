@@ -1,12 +1,30 @@
 # Cloverfield
 
-**An unbounded streaming transformer for captioned physics video.**
+**A general-purpose multimodal foundation model for creative professionals, developers, and interactive AI experiences.**
 
 ## Vision
 
-Cloverfield combines streaming cross-modal attention with physics-grounded training data to create a model that understands synchronized multimodal content—audio, video, and text—through continuous spectral phase coordinates.
+**Build a 6B parameter model that creative professionals actually want to use.**
 
-Following the "Textbooks Are All You Need" philosophy (Phi-1, Phi-1.5, Phi-2), we prioritize **quality over scale**: curated, instructive, physics-grounded educational content over massive web scrapes.
+Cloverfield enables:
+- **Creative editing**: "Give Mom a funny Christmas sweater in this family photo"
+- **Interactive storytelling**: Generate and explore virtual worlds in real-time
+- **Conversational AI avatars**: Natural multi-turn dialogue with visual characters
+- **Code generation with visual context**: "Add a glowing particle effect to this Unity scene"
+- **Video editing with natural language**: "Make this sunset more dramatic and add ambient ocean sounds"
+- **Image generation that obeys physics**: Objects have proper weight, lighting, and material properties
+
+**Long-term vision**: Real-time generation of interactive virtual worlds—think holodeck, but on your laptop. Explore AI-generated environments that respond to your actions, maintain physical consistency, and evolve through conversation.
+
+### How We Get There
+
+**Physics-grounded training** (Unreal Engine simulations) teaches the model how reality works—forces, materials, lighting, causality. This isn't about physics education; it's about ensuring generated content is **physically plausible**:
+- Shadows match light sources
+- Objects don't float or clip through surfaces
+- Materials behave realistically
+- Motion follows natural dynamics
+
+Combined with **quality over scale** philosophy (inspired by Phi-1/Phi-2): curated synthetic data from Unreal Engine beats massive web scrapes for learning world models.
 
 ## Training Philosophy: Quality Over Scale
 
@@ -19,22 +37,24 @@ Key principles:
 - **Synthetic curation**: GPT-generated exercises and explanations
 - **Data > Scale**: Phi-1's 7B tokens of curated data outperformed larger models on billions of web tokens
 
-### Our Adaptation: Physics-Grounded Multimodal Data
+### Our Adaptation: Physics-Grounded World Models
 
 We extend this philosophy to multimodal learning:
 
-**Captioned educational videos** combining:
-- Lecture narration (clear, instructive audio)
-- Unreal Engine physics simulations (ground-truth dynamics)
-- Synchronized captions and equation overlays (aligned text)
+**Synthetic training data from Unreal Engine** combining:
+- Natural language descriptions and dialogue
+- Physically accurate 3D scenes (materials, lighting, dynamics)
+- Synchronized audio (spatial sound, realistic interactions)
+- Ground-truth metadata (object properties, camera pose, forces)
 
-**Why physics simulations?**
-- Perfect ground truth (forces, velocities, trajectories)
-- Controllable complexity (start simple, scale systematically)
-- Naturally aligned (engine timesteps = video frames = audio samples)
-- Unlimited synthetic data at textbook quality
+**Why Unreal Engine synthetic data?**
+- **Perfect ground truth**: Every pixel has known 3D position, material, lighting
+- **Physical consistency**: Motion, collisions, and materials follow real-world physics
+- **Controllable diversity**: Generate unlimited variations of any scenario
+- **Naturally multimodal**: Engine timesteps synchronize video, audio, and text
+- **Quality over quantity**: Curated synthetic scenes > noisy web scrapes
 
-This is "textbook quality" for multimodal learning: precise, reproducible, instructive, and physically grounded.
+This teaches the model a **world model**—how reality works—enabling it to generate content that's not just visually convincing but physically plausible.
 
 ---
 
@@ -128,13 +148,14 @@ Efficient local attention with SPCE phase rotation. Full O(w²) cross-attention 
 ```
 Chunk size: 64 tokens
 Retrieved neighbors: k=5 per chunk
-Database: Physics knowledge base (millions of examples)
+Database: Multimodal knowledge base (millions of examples)
 ```
 
-For every 64-token chunk, retrieve k=5 similar physics scenarios from pre-built database:
-- Similar experimental setups
-- Relevant equations and derivations
-- Analogous phenomena from different domains
+For every 64-token chunk, retrieve k=5 similar examples from pre-built database:
+- Similar visual scenes (lighting, composition, materials)
+- Analogous dialogue patterns (conversation styles, emotional tone)
+- Related code patterns (Unity scripts, shader code, game logic)
+- Common editing operations (color grading, object manipulation)
 
 Cross-attention from window tokens to retrieved knowledge chunks.
 
@@ -153,10 +174,12 @@ Keys: Phase-rotated token embeddings (SPCE-encoded)
 
 **Example:**
 ```
-t=0:      User asks "What is projectile motion?"
-t=5000:   User asks "Apply that formula here"
-          → kNN retrieves exact tokens from t=0 ("projectile motion", formula)
-          → SSM carry maintains topic state ("discussing mechanics")
+t=0:      User: "Generate a cozy coffee shop scene with warm lighting"
+          → Model generates image with specific lighting setup
+t=5000:   User: "Now add a character sitting by the window, same lighting style"
+          → kNN retrieves exact tokens from t=0 (lighting parameters, color palette)
+          → SSM carry maintains scene state (camera pose, style consistency)
+          → RETRO retrieves similar coffee shop scenes with characters
           → Perfect long-range reference despite finite window
 ```
 
@@ -220,47 +243,57 @@ The inference engine maintains state across conversations and supports **low-ran
 
 ### Curriculum
 
-**Stage 1: Captioned lecture videos** (static scenes)
-- Math lessons with voiceover + whiteboard
-- Synchronized captions and equation overlays
-- Focus: audio-text alignment, long-form reasoning
+**Stage 1: Text-to-image with dialogue** (static scenes, foundation for visual understanding)
+- Pretrained LLM backbone (LLaMA 3 8B or Mistral 7B)
+- Unreal Engine rendered scenes with natural language descriptions
+- Synchronized audio narration and ambient sound
+- Focus: Cross-modal alignment, visual grounding, material/lighting understanding
 
-**Stage 2: Physics simulation videos** (dynamic scenes)
-- Unreal Engine: projectile motion, collisions, rigid body dynamics
-- Force vectors, velocity arrows, trajectory overlays
-- Focus: visual dynamics, spatial reasoning, physics grounding
+**Stage 2: Dynamic scenes and interaction** (temporal understanding)
+- Unreal Engine: Character movement, object interactions, environmental changes
+- Camera motion, lighting transitions, physics-based dynamics
+- Instruction-following: "Make the character wave" → animation generation
+- Focus: Temporal coherence, action understanding, world model learning
 
-**Stage 3: Mixed datasets**
-- Combined lectures + simulations
-- Transfer learning and generalization
-- Real-world educational content (Khan Academy, MIT OCW, etc.)
+**Stage 3: Conversational and editing tasks** (instruction following)
+- Multi-turn dialogue with visual references ("add a hat to this character")
+- Instruct-edit examples ("make this sunset more dramatic")
+- Code generation in visual contexts ("add particle effects to this scene")
+- Creative writing with scene generation
+- Focus: Instruction adherence, iterative refinement, creative control
+
+**Stage 4: Real-world data augmentation** (generalization)
+- Mix with curated web data (licensed images, videos, conversations)
+- Transfer learning from synthetic to real-world domains
+- Fine-tuning on creative professional workflows
 
 ### Input Structure
 
 Tokens are packed in **tick order** (1 tick ≈ 1/960 ms):
 
 ```
-[TICK_0000] [KEYFRAME] <cam_pose> <speaker_id>
+[TICK_0000] [KEYFRAME] <cam_pose> <scene_lighting> <material_properties>
 [TICK_0001] <video_patch_1> <audio_sample_1>
-[TICK_0002] <video_patch_2> <audio_sample_2> <caption_word_1>
+[TICK_0002] <video_patch_2> <audio_sample_2> <dialogue_word_1>
 [TICK_0003] <video_patch_3> <audio_sample_3>
 ...
-[TICK_1920] [KEYFRAME] <cam_pose> <object_pose_ball>
-[TICK_1921] <force_vector> <velocity_arrow>
+[TICK_1920] [KEYFRAME] <cam_pose> <character_pose> <object_positions>
+[TICK_1921] <instruction_token> "add_particle_effect"
 ...
 ```
 
 **Modality-specific encodings:**
 - **Video**: Patch tokens @ 30fps → ticks with frame offset
 - **Audio**: Waveform samples @ 16kHz → ticks with zero offset
-- **Text**: Caption words with narrator timestamps → tick-aligned
-- **Physics overlays**: Force vectors, equations → tick-aligned with video
+- **Text**: Dialogue/narration/instructions with timestamps → tick-aligned
+- **Scene metadata**: Camera pose, lighting, materials, object properties → tick-aligned
 
 **Key tokens:**
 - `[TICK]`: Hard anchor for phase (emitted every N ticks)
 - `[KEYFRAME]`: Store state, refresh anchors
-- `<cam_pose>`, `<object_pose>`: 3D spatial grounding
-- `<force_vector>`, `<equation>`: Physics annotations
+- `<cam_pose>`, `<object_pose>`, `<character_pose>`: 3D spatial grounding
+- `<scene_lighting>`, `<material_properties>`: Visual properties for consistent generation
+- `<instruction_token>`: Edit/generation commands
 
 ---
 
@@ -311,25 +344,31 @@ if t % keyframe_interval == 0:
 
 ## Success Metrics
 
-**What matters for captioned physics video:**
+**What matters for creative professionals and interactive AI:**
 
-### Phase Stability
-- **Phase residual** at keyframes over 4-hour streaming runs
-- **Drift accumulation** (should be near-zero with absolute `θ = ω·t`)
+### Instruction Following & Editing
+- **Edit accuracy**: "Give Mom a Christmas sweater" → correct object identification + appropriate generation
+- **Style consistency**: Maintaining lighting, color palette, artistic style across edits
+- **Multi-turn coherence**: Iterative refinements maintain previous edits
+- **Spatial understanding**: "Add character by the window" → correct spatial placement
 
-### Cross-Modal Alignment
-- **A/V sync error** (milliseconds) on hour-long lecture videos
-- **Caption timing accuracy** (word-level alignment)
+### Generation Quality
+- **Physical plausibility**: Generated content obeys real-world constraints (lighting, shadows, materials, physics)
+- **Visual fidelity**: FID scores on generated images/video comparable to SOTA in weight class
+- **Audio-visual sync**: Perfect synchronization between generated audio and visual content
+- **Temporal coherence**: No flickering, object persistence, smooth motion
 
-### Physics Understanding
-- **Force vector prediction** from video (next-token prediction on physics overlays)
-- **Trajectory extrapolation** (predict ball position from dynamics)
-- **Equation grounding** (match visual motion to symbolic equations)
+### Conversational AI
+- **Multi-turn dialogue**: Natural conversations with AI avatars maintaining character/context
+- **Visual grounding**: "Show me what you mean" → generates relevant visual content
+- **Long-context reasoning**: Maintains conversation state over hours (100K+ tokens)
+- **Personality consistency**: AI character maintains voice, style, knowledge across sessions
 
-### Long-Horizon Reasoning
-- **Cross-modal perplexity** over multi-hour videos
-- **Identity persistence** across scene cuts, occlusions
-- **Concept transfer** from static lectures to dynamic simulations
+### Interactive World Generation
+- **Real-time generation**: Latency <500ms for interactive responses in generated environments
+- **World consistency**: Generated scenes maintain spatial layout, object persistence, physics
+- **Exploration capability**: User can navigate and interact with AI-generated spaces
+- **Dynamic response**: Environment reacts to user actions with physical plausibility
 
 ### Retrieval Performance
 - **kNN recall accuracy**: Exact token retrieval from 100K+ token history
@@ -352,23 +391,24 @@ if t % keyframe_interval == 0:
 - Compare SPCE vs RoPE on audio-only task (music beat prediction)
 - **Success criterion**: SPCE should exceed RoPE due to higher information density (continuous time + shared cross-modal frequencies + explicit phase offsets)
 
-### Phase 2: Single-Modal Streaming (2–3 months)
-- Build SSM carry for audio streaming
-- Add keyframe anchoring
-- Test on long-form podcast transcription (audio + text)
-- **Success criterion**: Unbounded streaming with <1ms drift/hour
+### Phase 2: Text-to-Image Foundation (2–3 months)
+- Start from pretrained LLM (LLaMA 3 8B or Mistral 7B)
+- Add visual encoder/decoder, train on Unreal Engine scenes
+- Test on instruction-following: "Generate a cozy coffee shop"
+- **Success criterion**: Physically plausible image generation matching Stable Diffusion quality
 
-### Phase 3: Physics-Grounded Video (3–6 months)
-- Generate Unreal Engine physics datasets (100–1000 hours)
-- Train on captioned physics simulations
-- Evaluate force vector prediction and trajectory extrapolation
-- **Success criterion**: Predict physics overlays from video with >80% accuracy
+### Phase 3: Temporal & Editing Capabilities (3–6 months)
+- Add video generation and editing pathways
+- Train on multi-turn instruction-edit tasks
+- Implement real-time generation for interactive experiences
+- **Success criterion**: Successful instruct-edit ("Give Mom a Christmas sweater") + 8-sec video generation
 
-### Phase 4: Full Multimodal (6–12 months)
+### Phase 4: Conversational AI & Interactive Worlds (6–12 months)
 - Scale to 6B parameters with QLoRA on M4 Max
-- Train on mixed curriculum (lectures + simulations + real videos)
-- Publish results and open-source model
-- **Success criterion**: Match or exceed general-purpose VLMs on physics reasoning benchmarks
+- Train on conversational datasets with visual grounding
+- Implement real-time world generation (holodeck prototype)
+- Mix synthetic (Unreal) + real-world licensed data
+- **Success criterion**: Natural multi-turn dialogue with AI avatars + navigable generated environments
 
 ---
 
@@ -657,25 +697,35 @@ Total: ~2.1 GB (constant, regardless of hours of video processed)
 - 1.3B model + 7B tokens curated data > 10B+ model on web data
 - Quality beats scale for reasoning tasks
 
-**SPCE** extends this to multimodal:
-- Physics simulations = "textbook quality" for video
-- Continuous phase field = natural alignment
-- Streaming SSM = unbounded context
+**Cloverfield** extends this to creative multimodal AI:
+- Unreal Engine synthetic data = "textbook quality" for world models
+- Physics grounding = physically plausible generation (not just visual patterns)
+- Continuous phase field = natural cross-modal synchronization
+- Streaming architecture = unbounded interactive experiences
 
 ### ✅ Technically Feasible
 
-**Hardware**: 6B model trainable on M4 Max with QLoRA (~10GB VRAM)
+**Hardware**: 6B model trainable on M4 Max 128GB with QLoRA
 
-**Data**: Unreal Engine enables unlimited synthetic physics data at textbook quality
+**Data**: Unreal Engine enables unlimited synthetic training data with perfect ground truth (lighting, materials, physics)
 
-**Architecture**: SPCE simplifies to RoPE-style kernels (proven, fast)
+**Architecture**: Built on proven components (RoPE-like kernels, RETRO retrieval, Mamba SSM)
+
+**Timeline**: 6-8 months to holodeck prototype with staged implementation
 
 ### ✅ Unique Advantages
 
-**vs. Gemini/GPT-4o:**
-- Physics-grounded understanding (force, motion, causality)
-- Unbounded streaming (no context window limit)
-- Continuous phase alignment (automatic A/V sync)
+**vs. GPT-4o/Gemini:**
+- Physically plausible generation (shadows, materials, motion obey real-world rules)
+- Unbounded streaming context (no context window limits for conversations/world exploration)
+- Real-time interactive world generation (local, on-device)
+- Automatic cross-modal sync (SPCE phase alignment)
+
+**vs. Firefly/Midjourney/Runway:**
+- Conversational interface with iterative editing
+- Physics-grounded consistency (objects behave realistically)
+- Multi-turn instruction following with perfect context recall
+- Unified model for image + video + audio + code + conversation
 
 **vs. Academic models:**
 - Real implementation focus (not just theoretical)
