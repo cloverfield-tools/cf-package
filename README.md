@@ -73,40 +73,54 @@ This teaches the model a **world model**—how reality works—enabling it to ge
 
 ### 1. SPCE — Spectral Phase-Coherent Encoding
 
-**Replace all positional encodings with absolute-time spectral phase:**
+**Not a positional encoding—a continuous manifold where all modalities coexist.**
 
 ```
-θ = ω·t + φ₀
+θ = ω·t + k·r + φ₀
 ```
 
-**Not a positional encoding—a coordinate system.** Every modality (audio, video, text) shares the same spectral phase field. Beats, motion, and language stay naturally synchronized through phase coherence.
+where:
+- **ω**: Spectral frequency palette (12-24 log-spaced atoms: 10⁻⁴ to 10³ Hz)
+- **t**: Absolute continuous time
+- **k**: Spatial frequency vector (k_x, k_y, k_z for 3D coherence)
+- **r**: Spatial coordinates (x, y, z)
+- **φ₀**: Phase offset
+
+**SPCE defines how every modality coexists in one continuous spectral phase field.** Each token's coordinates are not a scalar "position" but a point in phase space that evolves with time, space, and energy. Traditional positional encodings break down after thousands of tokens because they're one-dimensional and periodic. SPCE carries continuous phase and frequency, behaving like a state space for all modalities—it handles motion, rhythm, and cross-modal phase alignment as the model's world clock and coordinate frame.
+
+**Crystal lattice spiral geometry:**
+
+In complex space, e^(iθ) traces spirals at different pitches:
+- **Low frequencies** (ω ≈ 10⁻⁴): Wide spirals → narrative arc, scene coherence (hours)
+- **Mid frequencies** (ω ≈ 1): Medium spirals → action sequences, sentences (seconds)
+- **High frequencies** (ω ≈ 10³): Tight spirals → frame details, phonemes (milliseconds)
+
+Together, the log-spaced ω atoms form a **quasi-crystalline lattice in phase space**. All modalities at time t, position r map to the same lattice coordinates—audio beats, video frames, and text tokens share identical phase, providing geometric cross-modal alignment through crystalline structure.
+
+**Multi-scale temporal decomposition:**
+
+Per-head softmax gates let attention heads explicitly select temporal scales:
+- Attention head attending to low-ω: learns long-range dependencies (narrative flow)
+- Attention head attending to high-ω: learns short-range patterns (local details)
+- Mixed-ω heads: learn cross-scale relationships
+
+This Fourier-like decomposition of temporal structure is fundamentally different from position-based encodings—it's geometric embedding into a multi-scale phase manifold.
 
 **Design:**
-- **Shared spectral palette**: 12–24 log-spaced ω atoms (global pool)
-- **Per-head gates**: Each attention head learns softmax-weighted mixture of atoms
-- **No per-token ω**: Frequencies are head-level, not token-level (reduces parameters)
-- **Absolute time evaluation**: `θ = ω·t` computed directly (no cumulative drift)
+- **Shared spectral palette**: 12–24 log-spaced ω atoms (global pool spanning temporal scales)
+- **Per-head gates**: Each attention head learns softmax-weighted mixture of ω atoms
+- **Spatial frequencies**: k_x, k_y, k_z encode 3D object coordinates (objects share spatial lattice)
+- **Absolute time evaluation**: `θ = ω·t + k·r` computed directly (no cumulative drift)
+- **Phase unwrapping**: Continuous phase across infinite timesteps (unbounded streaming)
 
-**Why this works:**
-- Audio beat at t=1.5s → phase φ(1.5)
-- Video frame at t=1.5s → same phase φ(1.5)
-- Caption word at t=1.5s → same phase φ(1.5)
-- Phase coherence = automatic cross-modal alignment
+**Key properties:**
 
-**Key property:** Full NLU capability is maintained because we use full O(w²) cross-attention within the window—every token can attend to every other token. SPCE phase rotation provides continuous temporal coordinates that enhance cross-modal alignment without compromising semantic understanding.
-
-**SPCE's unique advantage: Window size flexibility**
-
-Unlike RoPE (which learns position-based patterns), SPCE uses absolute time coordinates:
-- Model learns temporal relationships: "events 1 second apart relate in these ways"
-- NOT position relationships: "position 100 relates to position 15000 in these ways"
-
-This enables:
-- **Variable window training**: Randomly sample 4K, 8K, 16K, 32K per batch
-- **Flexible inference**: Same weights work with any window size
-- **Task-adaptive performance**: 4K for real-time holodeck, 32K for complex editing
-
-You cannot do this with RoPE/LLaMA/Mistral—changing their window size breaks learned attention patterns. SPCE's temporal encoding is window-agnostic.
+1. **Temporal continuity**: Phase unwrapped across infinite timesteps → unbounded streaming without drift
+2. **Spatial coherence**: Spatial frequencies e^(i(k_x·x + k_y·y + k_z·z)) → objects in 3D share coordinate system
+3. **Spectral control**: ω atoms are learnable → model adapts to slow/fast phenomena automatically
+4. **Cross-modal alignment**: Audio, video, text at (t, r) → identical phase coordinates → beats, motion, language sync
+5. **Memory anchoring**: Low-frequency ω bands provide stable references for SSM carry state
+6. **Window agnostic**: Temporal relationships (∆θ = ω·∆t) invariant to window size → variable window training works
 
 ### 2. Visual Text Encoding (DeepSeek OCR Approach)
 
