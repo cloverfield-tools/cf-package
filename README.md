@@ -73,7 +73,7 @@ This is "textbook quality" for multimodal learning: precise, reproducible, instr
 - Caption word at t=1.5s → same phase φ(1.5)
 - Phase coherence = automatic cross-modal alignment
 
-**Key property:** SPCE rotation preserves semantic embeddings (orthogonal to content, like RoPE). Full NLU capability maintained.
+**Key property:** Full NLU capability is maintained because we use full O(w²) cross-attention within the window—every token can attend to every other token. SPCE phase rotation provides continuous temporal coordinates that enhance cross-modal alignment without compromising semantic understanding.
 
 ### 2. Visual Text Encoding (DeepSeek OCR Approach)
 
@@ -100,12 +100,29 @@ Text → Rendered Image → Windowed SAM (80M) → CLIP Global (300M) → 16× C
 
 #### **Tier 1: Windowed Attention (Local Context)**
 ```
-Window size: 2048 tokens
-Complexity: O(w²) = O(4M) operations
-Memory: O(w) = O(2K) tokens
+Window size: 4K-32K tokens (task-dependent)
+- Video generation (standard): 4K-8K tokens
+- Video generation (ultra quality): 16K-32K tokens
+- Code generation: ~8K tokens
+- NLU/conversational: 8K-16K tokens
+
+Complexity: O(w²) scales with window choice
+- 4K window: 16M ops/layer
+- 16K window: 256M ops/layer
+- 32K window: 1B ops/layer (still 160× faster than standard attention @ 400K tokens)
+
+Memory: O(w) - constant per window regardless of total sequence length
 ```
 
-Efficient local attention with SPCE phase rotation. Handles immediate context within sliding window.
+Efficient local attention with SPCE phase rotation. Full O(w²) cross-attention within the window—every token can attend to every other token for complete semantic understanding.
+
+**Why small windows work:** The three-tier retrieval architecture + SSM carry means we don't need massive windows for long-range understanding:
+- **Tier 1 (windowed attention)**: Handles immediate context with full O(w²) cross-attention
+- **Tier 2 (RETRO retrieval)**: Pulls in relevant physics knowledge
+- **Tier 3 (kNN retrieval)**: Perfect recall of exact tokens from unbounded history
+- **SSM carry**: Low-frequency phase coherence maintains narrative/conversational state across windows
+
+**Result: Small finite windows (4K-32K) + retrieval + SSM carry = unbounded effective context** with constant compute cost.
 
 #### **Tier 2: Chunked Knowledge Retrieval (RETRO-Style)**
 ```
@@ -140,8 +157,20 @@ t=0:      User asks "What is projectile motion?"
 t=5000:   User asks "Apply that formula here"
           → kNN retrieves exact tokens from t=0 ("projectile motion", formula)
           → SSM carry maintains topic state ("discussing mechanics")
-          → Perfect long-range reference despite 2048-token window
+          → Perfect long-range reference despite finite window
 ```
+
+### The Architecture's Key Advantage: Unbounded Effective Context
+
+**Small finite windows (4K-32K tokens) + Three-tier retrieval + SSM carry = Unbounded effective context**
+
+- **Constant compute cost**: O(w²) regardless of conversation/video length
+- **Perfect recall**: kNN retrieval finds exact tokens from unlimited history
+- **Knowledge integration**: RETRO pulls relevant physics examples
+- **State persistence**: SSM carry maintains conversational/narrative flow
+- **No context limit**: Process hours of video with constant memory footprint
+
+This is the architectural moat: **unbounded understanding with bounded compute**.
 
 ### 4. Spectral SSM Carry
 
@@ -253,7 +282,7 @@ Tokens are packed in **tick order** (1 tick ≈ 1/960 ms):
 **3. Absolute phase**
 ```python
 θ = ω_head · t  # Direct computation, no drift
-rotary_apply(Q, K, θ)  # Standard RoPE-style attention
+rotary_apply(Q, K, θ)  # SPCE phase rotation (replaces RoPE)
 ```
 
 ### SSM Carry
@@ -321,7 +350,7 @@ if t % keyframe_interval == 0:
 ### Phase 1: SPCE Validation (1–2 months)
 - Implement shared ω atoms + per-head gates in MLX/PyTorch
 - Compare SPCE vs RoPE on audio-only task (music beat prediction)
-- **Success criterion**: SPCE matches or beats RoPE on phase-sensitive tasks
+- **Success criterion**: SPCE should exceed RoPE due to higher information density (continuous time + shared cross-modal frequencies + explicit phase offsets)
 
 ### Phase 2: Single-Modal Streaming (2–3 months)
 - Build SSM carry for audio streaming
@@ -354,9 +383,9 @@ if t % keyframe_interval == 0:
 | Standard Transformer | O(n²) = O(160B) | O(n²) | 1× baseline | Quadratic wall |
 | FlashAttention | O(n²) = O(160B) | O(n) | 2-3× | Memory-efficient, still quadratic |
 | Mamba | O(n) = O(400K) | O(1) | 5× | Linear time, constant memory |
-| **Cloverfield** | **O(w²) ≈ O(4M)** | **O(1)** | **4-6×** | **Fixed window + SSM carry** |
+| **Cloverfield** | **O(w²)** | **O(w)** | **4-6×** | **Flexible window (4K-32K) + SSM carry** |
 
-*n = total sequence length, w = window size (e.g., 2048)*
+*n = total sequence length, w = window size (4K-32K depending on task)*
 
 ---
 
@@ -391,6 +420,12 @@ if t % keyframe_interval == 0:
 
 **Verdict:** SPCE ≈ RoPE overhead (1-3%), potentially slightly better since ω is per-head, not per-token.
 
+**SPCE information density advantage:**
+- Continuous absolute time (not discrete positions) → finer temporal resolution
+- Shared ω palette across modalities → built-in cross-modal phase coherence
+- Explicit phase offsets → structural alignment without learning
+- Result: SPCE has MORE information than RoPE while maintaining similar computational cost
+
 #### 3. Windowed Attention + Integrated Retrieval vs Full Attention
 
 **Standard attention over full context:**
@@ -422,19 +457,19 @@ Total per window: O(w² + w·log(n) + d_ssm)
 
 **Example (4-hour video @ 100 tokens/sec):**
 - n = 400,000 tokens (full context)
-- w = 2,048 tokens (fixed window)
+- w = 4K-32K tokens (task-dependent window)
 
 **Standard attention:**
 - 400K² = 160 billion ops per layer
 - 52 GB memory (KV cache)
 
-**Cloverfield:**
-- Window attention: 2K² = 4 million ops
-- RETRO retrieval: 32 chunks × 5 neighbors × encode = ~160K ops
-- kNN search: 2K × log(400K) ≈ 37K ops (FAISS)
+**Cloverfield with 16K window (typical for video understanding):**
+- Window attention: 16K² = 256 million ops
+- RETRO retrieval: 250 chunks × 5 neighbors × encode = ~1.25M ops
+- kNN search: 16K × log(400K) ≈ 290K ops (FAISS)
 - SSM update: 512 ops
-- **Total: ~4.2M ops per layer (38,000× reduction!)**
-- **Memory: 0.3 GB window + index (173× reduction in active memory)**
+- **Total: ~258M ops per layer (620× reduction!)**
+- **Memory: 2.1 GB window + index (25× reduction in active memory)**
 
 **Key insight:** Retrieval cost is negligible compared to attention savings.
 
@@ -476,12 +511,12 @@ Total per window: O(w² + w·log(n) + d_ssm)
 - **Limitation:** Weak at in-context learning (copying tasks)
 
 **Cloverfield:**
-- Fixed window: O(w²) = 2K² = 4M ops per layer
+- Flexible window: O(w²) = 16K² = 256M ops per layer (example using 16K)
 - SSM carry: O(d_ssm) per window shift = 256 ops
-- Total per window: ~4M ops (constant!)
-- Number of windows: n/w = 400K/2K = 200 windows
-- Total: 200 × 4M = 800M ops (vs 160B for standard attention)
-- **200× reduction in total ops**
+- Total per window: ~256M ops (constant!)
+- Number of windows: n/w = 400K/16K = 25 windows
+- Total: 25 × 256M = 6.4B ops (vs 160B for standard attention)
+- **25× reduction in total ops** (scales with window choice)
 - Memory: Constant O(w² + d_ssm)
 
 #### 5. Memory Footprint
@@ -498,17 +533,19 @@ For 6B model (32 layers, 400K tokens, 32 heads, 128 dim, fp16):
 ```
 Memory = window_cache + SSM_state
 Window cache = n_layers × w × n_heads × head_dim × 2 × 2
-= 32 × 2048 × 32 × 128 × 2 × 2
-= 268 MB (fixed!)
+
+For 16K window (typical video understanding):
+= 32 × 16384 × 32 × 128 × 2 × 2
+= 2.1 GB (constant, independent of video length!)
 
 SSM state = n_layers × d_ssm × 2
 = 32 × 512 × 2
 = 33 KB (negligible!)
 
-Total: ~270 MB (constant, independent of video length)
+Total: ~2.1 GB (constant, regardless of hours of video processed)
 ```
 
-**Savings: 52 GB → 0.27 GB = 193× reduction**
+**Savings: 52 GB → 2.1 GB = 25× reduction in active memory**
 
 #### 6. Throughput Estimates
 
@@ -573,16 +610,17 @@ Total: ~270 MB (constant, independent of video length)
 | Aspect | Standard Transformer | Mamba | Cloverfield |
 |--------|---------------------|-------|-------------|
 | **Time complexity** | O(n²) | O(n) | O(w² + w·log n) ≈ constant |
-| **Memory (active)** | O(n²) → O(n) cache | O(1) | O(w) (constant) |
+| **Memory (active)** | O(n²) → O(n) cache | O(1) | **O(w) = 2-8 GB (constant)** |
 | **Memory (total)** | O(n) | O(1) | O(n) for kNN index |
 | **Throughput** | 1× | 5× | 4-6× |
 | **Context limit** | 128K-1M tokens | Unbounded | Unbounded |
 | **Perfect recall** | Full attention | No | Yes (kNN retrieval) |
 | **Knowledge retrieval** | No | No | Yes (RETRO-style) |
 | **Phase alignment** | Learned | Learned | Built-in (SPCE) |
-| **NLU capability** | Excellent | Good | Excellent (visual text) |
+| **NLU capability** | Excellent | Good | Excellent (full attention in window) |
 | **Streaming latency** | High (recompute) | Low (constant) | Low (constant) |
-| **Memory @ 400K tokens** | 52 GB active | ~1 GB | 0.3 GB active + index |
+| **Memory @ 400K tokens** | 52 GB active | ~1 GB | **2-8 GB (window-dependent) + index** |
+| **Effective context** | Limited by window | Good (SSM) | **Unbounded (retrieval + SSM)** |
 | **Multi-hour stability** | Poor (no carry) | Good (SSM) | Excellent (SSM+keyframes+retrieval) |
 
 ---
