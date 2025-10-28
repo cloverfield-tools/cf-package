@@ -73,7 +73,9 @@ This teaches the model a **world model**—how reality works—enabling it to ge
 
 ### 1. SPCE — Spectral Phase-Coherent Encoding
 
-**Not a positional encoding—a continuous manifold where all modalities coexist.**
+*(Pronounced "space" - mnemonic and literal: encodes space and time)*
+
+**Not a positional encoding—a field embedding.** SPCE is a continuous spectral phase field that spans space and time. Each token lives as a point on a helical manifold in this space. Every modality—text, audio, video—shares the same spectral coordinate system, so cross-modal alignment is natural.
 
 ```
 θ = ω·t + k·r + φ₀
@@ -106,12 +108,14 @@ Per-head softmax gates let attention heads explicitly select temporal scales:
 
 This Fourier-like decomposition of temporal structure is fundamentally different from position-based encodings—it's geometric embedding into a multi-scale phase manifold.
 
-**Design:**
+**Implementation:**
+- **Complex exponential basis**: e^(iωt) where ω spans learned spectral distribution
 - **Shared spectral palette**: 12–24 log-spaced ω atoms (global pool spanning temporal scales)
-- **Per-head gates**: Each attention head learns softmax-weighted mixture of ω atoms
+- **Per-head ω distributions**: Each attention head learns softmax-weighted mixture of ω atoms → multi-scale temporal sensitivity
 - **Spatial frequencies**: k_x, k_y, k_z encode 3D object coordinates (objects share spatial lattice)
 - **Absolute time evaluation**: `θ = ω·t + k·r` computed directly (no cumulative drift)
-- **Phase unwrapping**: Continuous phase across infinite timesteps (unbounded streaming)
+- **Phase continuity across windows**: θ_{t+Δt} = θ_t + ω·Δt maintains smooth evolution
+- **Re-normalization**: Periodic low-frequency re-anchoring prevents long-run precision drift
 
 **Key properties:**
 
@@ -119,8 +123,9 @@ This Fourier-like decomposition of temporal structure is fundamentally different
 2. **Spatial coherence**: Spatial frequencies e^(i(k_x·x + k_y·y + k_z·z)) → objects in 3D share coordinate system
 3. **Spectral control**: ω atoms are learnable → model adapts to slow/fast phenomena automatically
 4. **Cross-modal alignment**: Audio, video, text at (t, r) → identical phase coordinates → beats, motion, language sync
-5. **Memory anchoring**: Low-frequency ω bands provide stable references for SSM carry state
+5. **SSM coupling**: Low-frequency ω bands persist in SSM carry (narrative state), high-frequency bands refresh with attention (local details)
 6. **Window agnostic**: Temporal relationships (∆θ = ω·∆t) invariant to window size → variable window training works
+7. **Multi-view ready**: SPCE becomes shared coordinate frame for multiple cameras—spatial frequencies encode same 3D world from different viewpoints
 
 ### 2. Visual Text Encoding (DeepSeek OCR Approach)
 
