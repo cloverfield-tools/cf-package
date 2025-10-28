@@ -535,8 +535,133 @@ Current focus: SPCE prototype implementation in MLX
 
 ## References
 
-- **Textbooks Are All You Need** (Gunasekar et al., 2023) — Quality over scale for code generation
-- **Textbooks Are All You Need II** (Li et al., 2023) — Phi-1.5 for natural language
-- **Phi-2** (Microsoft Research, 2023) — 2.7B model matching 25× larger models
-- **Mamba** (Gu & Dao, 2023) — Linear-time SSMs for unbounded sequences
-- **RoFormer** (Su et al., 2021) — Rotary position embeddings
+### Training Philosophy: Quality Over Scale
+
+- **Textbooks Are All You Need** (Gunasekar et al., 2023)
+  Quality over scale for code generation. Phi-1 (1.3B params) with curated synthetic data outperforms larger models.
+  *arXiv:2306.11644*
+
+- **Textbooks Are All You Need II** (Li et al., 2023)
+  Phi-1.5 for natural language reasoning tasks.
+  *arXiv:2309.05463*
+
+- **Phi-2** (Microsoft Research, 2023)
+  2.7B model matching 25× larger models through data quality.
+  *Microsoft Research Blog*
+
+### Unified Multimodal Architectures
+
+- **Gemini 1.5: Unlocking multimodal understanding** (Gemini Team, Google, 2024)
+  Joint vision-language transformers with unified multimodal backbone. Direct cross-modal tokenization where image patches, speech spectrograms, and text sequences coexist in the same latent representation.
+  *arXiv:2403.05530* | [PDF](https://storage.googleapis.com/deepmind-media/gemini/gemini_v1_5_report.pdf)
+
+- **Meta-Transformer: A Unified Framework for Multimodal Learning** (Zhang et al., 2023)
+  Unified tokenizer across 12 modalities with shared token space. Performs multimodal perception without paired training data.
+  *arXiv:2307.10802* | [Project](https://kxgong.github.io/meta_transformer/)
+
+- **ImageBind: One Embedding Space To Bind Them All** (Girdhar et al., 2023)
+  Joint embedding space across 6 modalities (vision, text, audio, depth, thermal, IMU).
+  *CVPR 2023* | *arXiv:2305.05665*
+
+- **Chameleon: Mixed-Modal Early-Fusion Foundation Models** (Meta AI, 2024)
+  Early-fusion token-based architecture treating images and text as unified vocabulary.
+  *arXiv:2405.09818*
+
+- **UniForm: Unified Diffusion Transformer for Audio-Video** (Zhao et al., 2025)
+  Unified latent space for audio and video with single diffusion process.
+  *arXiv:2502.03897* | [Project](https://uniform-t2av.github.io/)
+
+### State Space Models for Streaming
+
+- **Mamba: Linear-Time Sequence Modeling** (Gu & Dao, 2023)
+  Selective state spaces with linear time complexity, 5× faster than transformers. Constant memory for unbounded sequences.
+  *arXiv:2312.00752*
+
+- **Mamba-2: State Space Duality** (Dao & Gu, 2024)
+  Structured state space duality connecting SSMs and attention. 8× faster inference for hybrid models.
+  *Technical Report*
+
+### Spectral & Frequency Domain Methods
+
+- **Fourier Neural Operator (FNO)** (Li et al., 2020)
+  Learns mappings between function spaces in Fourier domain. Resolution-invariant with global convolutions via FFT.
+  *ICLR 2021* | *arXiv:2010.08895*
+
+- **Adaptive Fourier Neural Operator (AFNO)** (Guibas et al., 2021)
+  Efficient token mixer learning in Fourier domain with quasi-linear complexity. Block-diagonal structure with adaptive weight sharing.
+  *NeurIPS 2021* | *arXiv:2111.13587* | [GitHub](https://github.com/NVlabs/AFNO-transformer)
+
+- **Global Filter Network (GFNet)** (Rao et al., 2021)
+  Replaces self-attention with learnable Fourier filters for efficient long-range dependency modeling.
+  *NeurIPS 2021*
+
+- **SpectFormer** (Pinto et al., 2023)
+  Combines spectral layers (FNet, GFNet, AFNO) with multi-headed attention for hybrid architecture.
+  *arXiv:2304.06446*
+
+### Complex-Valued & Phase-Aware Networks
+
+- **Complex-valued Neural Networks for Non-Stationary Physical Data** (Toms et al., 2020)
+  Preserves phase information in seismic and signal processing. Smaller complex networks outperform larger real-valued networks.
+  *Computers & Geosciences* | *arXiv:1905.12321*
+
+- **A Survey of Complex-Valued Neural Networks** (Hirose & Yoshida, 2021)
+  Comprehensive review of phase-preserving architectures for audio, MRI, and communications.
+  *arXiv:2101.12249*
+
+- **Phase-Aware Deep Learning with Complex CNNs for Audio** (Komatsu et al., 2024)
+  Complex-valued CNNs for superior audio signal processing with explicit phase modeling.
+  *arXiv:2510.09926*
+
+### Continuous & Coordinate-Based Representations
+
+- **Neural Ordinary Differential Equations** (Chen et al., 2018)
+  Continuous-depth models treating network depth as continuous variable. Constant memory cost with adaptive evaluation.
+  *NeurIPS 2018* | *arXiv:1806.07366*
+
+- **Implicit Neural Representations with Periodic Activation (SIREN)** (Sitzmann et al., 2020)
+  Sinusoidal activation functions for coordinate-based networks. Accurately represents signals and their derivatives.
+  *NeurIPS 2020* | *arXiv:2006.09661* | [Project](https://www.vincentsitzmann.com/siren/)
+
+- **NeRF: Neural Radiance Fields** (Mildenhall et al., 2020)
+  Continuous 3D scene representation using positional encodings for high-frequency details.
+  *ECCV 2020*
+
+### Positional Encoding Methods
+
+- **RoFormer: Enhanced Transformer with Rotary Position Embedding** (Su et al., 2021)
+  Rotary position embeddings unifying absolute and relative approaches. Negligible 1-3% overhead.
+  *arXiv:2104.09864*
+
+- **ALiBi: Attention with Linear Biases** (Press et al., 2022)
+  Integrates positional information directly in attention computation. Better extrapolation beyond training length.
+  *ICLR 2022*
+
+- **Time-Aware Positional Encoding for Video** (Disney Research, 2024)
+  Encodes relative time distance between video frames, not just order. Critical for A/V synchronization.
+  *Technical Report*
+
+### Related Work on Temporal Coherence
+
+- **TimeSformer** (Bertasius et al., 2021)
+  Divided space-time attention for video understanding with fixed/learnable spatial and temporal encodings.
+  *ICML 2021*
+
+---
+
+### SPCE's Unique Contribution
+
+While these approaches use:
+- **Learned discrete embeddings** (Gemini, Meta-Transformer)
+- **Frequency domain operations** (FNO, AFNO, GFNet)
+- **Complex phase in forward pass only** (Complex CNNs)
+- **Continuous depth but discrete positions** (Neural ODEs)
+
+**SPCE provides:**
+- **Continuous spectral phase field** as the primary coordinate system
+- **Absolute time evaluation** θ = ω·t (no cumulative drift)
+- **Cross-modal phase coherence** built into representation (not learned)
+- **Physics-grounded coordinates** from Unreal Engine timesteps
+- **Unbounded streaming** with SSM carry and keyframe anchoring
+
+Closest analogy: **Gemini's unified backbone + RoPE's rotary encoding + FNO's spectral learning + SIREN's continuous coordinates**, unified for multimodal streaming.
