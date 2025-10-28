@@ -1,66 +1,48 @@
-# cf-package [![Circle CI](https://circleci.com/gh/cloverfield-tools/cf-package/tree/master.svg?style=svg)](https://circleci.com/gh/cloverfield-tools/cf-package/tree/master)
+# Cloverfield
 
-Cloverfield Package Scaffold
+A new kind of transformer featuring streaming cross-modal attention.
 
-# Status - Deprecated
+## Overview
 
-This package is not being actively maintained.
+Cloverfield is trained on next-token prediction from video lessons synthesized using tools like Synthesia.io to create math and captioned physics courses complete with photorealistic, engine-grounded physics from Unreal Engine.
 
-## What does this do?
+We draw from lessons like DeepSeek's OCR paper for unified representations, and conduct traditional next-token-prediction training on multimodal content: audio, video, and OCR text. Supports synchronized multi-channel inputs.
 
-It scaffolds a new module with the following features:
+## SPCE — Spectral Phase-Coherent Encoding
 
-* ES6 with Babel
-* Lint with ESLint
-* Tape tests with coverage report
-* Dependency security audits with nsp
-* Ensure dependencies are properly declared in package.json
-* Git precommit hook enforces quality checks on commit
-* CI config (Travis, CircleCI)
-* [A contributing guide](template/docs/contributing/index.md)
-* An assortment of useful npm scripts
+*Pronounced "space". Elegant, literal, mnemonic, and thematically right.*
 
+### 💡 Ideate
 
-## Getting Started
+SPCE describes what we're really encoding: a continuous spectral phase field that spans space and time. Each token lives as a point on a helical manifold in this space. Every modality—text, audio, video—shares the same spectral coordinate system, so cross-modal alignment is natural.
 
-```sh
-npm install -g cf-package
-mkdir project
-cd project
-cf-package
-npm install
-npm test
-```
+### 🪞 Reflect Critically
 
-### Input via prompt:
+It's not a positional encoding anymore. It's a **field embedding**. RoPE mapped discrete indices to rotations. SPCE embeds events into a continuous oscillatory manifold whose phase evolves smoothly with real time and frequency. The only tricky part is precision and drift over long runs, but that's solvable with re-normalization and periodic low-frequency re-anchoring.
 
-```sh
-cf-package
-> Your name: My Name
-> Your email (will be publicly available, optional): my@email 
-> Your GitHub public username: mygithub
-> Package name: test
-> Package description: Test Package
-```
+### 🔭 Expand Orthogonally
 
-Variable            | Prompt
-------------------- | ---
-user.name           | > Your name:
-user.email          | > Your email (will be publicly available, optional):
-user.github         | > Your GitHub public username:
-package.name        | > Package name:
-package.description | > Package description:
+- Implement with complex exponential basis `e^{iωt}` where `ω` spans a learned spectral distribution
+- Maintain phase continuity across windows: `θ_{t+Δt} = θ_t + ωΔt`
+- Give each attention head its own ω-distribution; this yields multi-scale temporal sensitivity
+- Couple SPCE with the SSM carry so low frequencies persist and high frequencies refresh
+- Extend to 3D by adding spatial frequencies `e^{i(k_x x + k_y y + k_z z)}`; the same math covers motion, depth, and camera pose
+- When multi-view training arrives, SPCE becomes the shared coordinate frame for every camera—literally shared space
 
-### Quick input
+## Architecture Highlights
 
-Alternatively it is possible to input every generator variable as CLI option:
+- **Cross-modal attention**: Unified attention mechanism across text, audio, and video modalities
+- **Streaming processing**: Real-time processing of multi-channel synchronized inputs
+- **Spectral phase encoding**: Continuous field embeddings that naturally align cross-modal data
+- **Multi-scale temporal sensitivity**: Per-head frequency distributions for capturing different temporal scales
 
-```sh
-cf-package --user.name="My Name" \
-  --user.email=my@email \
-  --user.github=mygithub \
-  --package.name=test \
-  --package.description="Test Package"
-```
+## Training Data
 
-Explore and enjoy!  Part of the [Cloverfield project](https://github.com/cloverfield-tools/cloverfield).
+- Synthesized video lessons (math, physics)
+- Photorealistic physics simulations from Unreal Engine
+- OCR-extracted text with unified representations
+- Synchronized audio, video, and text channels
+
+## Status
+
+🚧 This project is in active development.
