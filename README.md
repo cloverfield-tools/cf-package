@@ -1,257 +1,313 @@
 # Cloverfield
 
-A new kind of transformer featuring streaming cross-modal attention.
+**An unbounded streaming transformer for captioned physics video.**
 
-## Overview
+## Vision
 
-Cloverfield is trained on next-token prediction from video lessons synthesized using tools like Synthesia.io to create math and captioned physics courses complete with photorealistic, engine-grounded physics from Unreal Engine.
+Cloverfield combines streaming cross-modal attention with physics-grounded training data to create a model that understands synchronized multimodal content—audio, video, and text—through continuous spectral phase coordinates.
 
-We draw from lessons like DeepSeek's OCR paper for unified representations, and conduct traditional next-token-prediction training on multimodal content: audio, video, and OCR text. Supports synchronized multi-channel inputs.
+Following the "Textbooks Are All You Need" philosophy (Phi-1, Phi-1.5, Phi-2), we prioritize **quality over scale**: curated, instructive, physics-grounded educational content over massive web scrapes.
 
-## SPCE — Spectral Phase-Coherent Encoding
+## Training Philosophy: Quality Over Scale
 
-*Pronounced "space". Elegant, literal, mnemonic, and thematically right.*
+### Inspired by "Textbooks Are All You Need"
 
-### 💡 Ideate
+Microsoft Research's Phi models (1.3B–2.7B parameters) demonstrated that **small models trained on high-quality synthetic data can match models 25× larger** on reasoning tasks.
 
-SPCE describes what we're really encoding: a continuous spectral phase field that spans space and time. Each token lives as a point on a helical manifold in this space. Every modality—text, audio, video—shares the same spectral coordinate system, so cross-modal alignment is natural.
+Key principles:
+- **Textbook quality**: Clear, self-contained, instructive content
+- **Synthetic curation**: GPT-generated exercises and explanations
+- **Data > Scale**: Phi-1's 7B tokens of curated data outperformed larger models on billions of web tokens
 
-### 🪞 Reflect Critically
+### Our Adaptation: Physics-Grounded Multimodal Data
 
-It's not a positional encoding anymore. It's a **field embedding**. RoPE mapped discrete indices to rotations. SPCE embeds events into a continuous oscillatory manifold whose phase evolves smoothly with real time and frequency. The only tricky part is precision and drift over long runs, but that's solvable with re-normalization and periodic low-frequency re-anchoring.
+We extend this philosophy to multimodal learning:
 
-### 🔭 Expand Orthogonally
+**Captioned educational videos** combining:
+- Lecture narration (clear, instructive audio)
+- Unreal Engine physics simulations (ground-truth dynamics)
+- Synchronized captions and equation overlays (aligned text)
 
-- Implement with complex exponential basis `e^{iωt}` where `ω` spans a learned spectral distribution
-- Maintain phase continuity across windows: `θ_{t+Δt} = θ_t + ωΔt`
-- Give each attention head its own ω-distribution; this yields multi-scale temporal sensitivity
-- Couple SPCE with the SSM carry so low frequencies persist and high frequencies refresh
-- Extend to 3D by adding spatial frequencies `e^{i(k_x x + k_y y + k_z z)}`; the same math covers motion, depth, and camera pose
-- When multi-view training arrives, SPCE becomes the shared coordinate frame for every camera—literally shared space
+**Why physics simulations?**
+- Perfect ground truth (forces, velocities, trajectories)
+- Controllable complexity (start simple, scale systematically)
+- Naturally aligned (engine timesteps = video frames = audio samples)
+- Unlimited synthetic data at textbook quality
 
-## Implementation: Continuous Field Representation
-
-### Philosophy
-
-Treat SPCE as a continuous field with discrete evaluation. Keep one global tick. Encode phase as analytic functions with small parameter sets. **Never integrate noisy increments if you can compute phase from absolute time.** Bind all modalities to the same clock. Use a tiny SSM carry for slow harmonics. Fuse everything with next-token prediction.
-
-### Core Principles
-
-**The traps:**
-- Numerical drift from cumulative integration
-- Poor ω priors leading to unstable training
-- Gradient fragility through phase computations
-- Kernel cost from naive complex operations
-
-**The solutions:**
-- Absolute time evaluation: `θ = ωt + φ₀`
-- Spectral priors with small mixtures
-- Complex-safe autograd
-- Fused CUDA kernels
-- Measure and clamp everything
-
-### Dual-View Phase Representation
-
-Use two views of phase simultaneously:
-
-1. **Absolute phase** from `ω × t` for stability
-2. **Local incremental phase** for fine alignment inside the window
-
-Blend them with a learned gate. Use keyframes to re-anchor slow terms. Learn ω as a small mixture per head. Share a tiny pool across heads and let heads pick.
-
-### ⚖️ Best Tradeoff Design
-
-- Absolute time phase computation
-- Mixture of log-normal ω atoms per head
-- Shared atom pool with per-head gates
-- Single global tick with fractional offsets for each modality
-- Fused complex rotary kernels
-
-This is practical and fast.
+This is "textbook quality" for multimodal learning: precise, reproducible, instructive, and physically grounded.
 
 ---
 
-## Technical Implementation
+## Core Architecture
 
-### 1. Continuous Parameterization
+### Primary Objective
 
-**Absolute time representation:**
+**Unbounded streaming transformer** with:
+1. **SPCE** (Spectral Phase-Coherent Encoding) — continuous field coordinates
+2. **Spectral SSM carry** — long-range harmonics and entity memory
+3. **Keyframe anchoring** — periodic drift correction
+
+### 1. SPCE — Spectral Phase-Coherent Encoding
+
+**Replace all positional encodings with absolute-time spectral phase:**
+
 ```
-t = 64-bit tick + float32 residual
-θ = ωt + φ₀  // Direct computation, no cumulative sum, no drift
-```
-
-**Phase encoding:**
-- Store phase as complex pair `(cos θ, sin θ)` to avoid unwrap in hot path
-- Keep auxiliary unwrapped `θ̂` for long-range SSM only
-- Use mixed precision safely:
-  - Store `ω` in `float32`
-  - Accumulate `t` in `float64`
-  - Compute `cos θ, sin θ` in `float32` with range reduction
-
-### 2. Phase Unwrapping at Scale
-
-Keep two channels:
-
-1. **Unit circle** `(cos θ, sin θ)` for attention
-2. **Slow unwrapped** `θ̂` tracked only in the carry for low-frequency anchors
-
-**Epoch-residual representation:**
-```
-θ̂ = E·π + r
-```
-- Update `E` only at keyframes
-- Use Kahan-style compensated updates for `r`
-- Optional Kalman corrector nudges `θ̂` toward `ωt` at keyframes to kill drift
-
-### 3. Learnable Spectral Distributions
-
-**Basis as small mixture per head:**
-```
-ωₕ(f) = Σₖ αₕₖ · ωₖ
+θ = ω·t + φ₀
 ```
 
-where `ωₖ` are shared atoms.
+**Not a positional encoding—a coordinate system.** Every modality (audio, video, text) shares the same spectral phase field. Beats, motion, and language stay naturally synchronized through phase coherence.
 
-**Configuration:**
-- `K ∈ [8, 16]` atoms per pool
-- Two pools:
-  - **Low:** log-uniform from `10⁻⁴` to `1`
-  - **High:** log-uniform from `1` to `10³` (in tick units)
-- Heads learn gates `α` (simplex-constrained via softmax)
-- Optional chirp term `dω/dt` for acceleration (tiny linear head, clamped)
+**Simplified design:**
+- **Shared spectral palette**: 12–24 log-spaced ω atoms (global pool)
+- **Per-head gates**: Each attention head learns softmax-weighted mixture of atoms
+- **No per-token ω**: Frequencies are head-level, not token-level (reduces parameters)
+- **Absolute time evaluation**: `θ = ω·t` computed directly (no cumulative drift)
 
-### 4. Cross-Modal Synchronization
+**Why this works:**
+- Audio beat at t=1.5s → phase φ(1.5)
+- Video frame at t=1.5s → same phase φ(1.5)
+- Caption word at t=1.5s → same phase φ(1.5)
+- Phase coherence = automatic cross-modal alignment
 
-**One global tick** (e.g., 1/960 millisecond)
+### 2. Spectral SSM Carry
 
-**Modality-specific fractional offsets:**
-- Audio @ 16kHz → ticks with zero offset
-- Video @ 30fps → ticks with fixed frame offset
-- Text → event timestamps from narrator (may repeat last offset when idle)
+**Diagonal, low-rank state space model** for long-term memory:
 
-**Token packing:**
-- Pack tokens in tick order
-- `[TICK]` tokens hard-anchor phase
-- Backpressure tokens let encoders slow down to maintain sync
-
-### 5. Training Dynamics
-
-**Gradient flow through phase:**
-
-Use complex rotary apply with Wirtinger-safe autograd:
 ```
-z · e^(iθ) = [x cos θ - y sin θ, x sin θ + y cos θ]
+x_next = exp(-a·Δt) ⊙ (b·x + gain·u)
 ```
 
-**Regularization:**
-- Clip `∂θ/∂ω` within sane range
-- Spectral total variation on ω gates across layers (prevents jitter)
-- Tiny auxiliary loss: predict next keyframe phase from carry (encourages stable slow harmonics)
+**Properties:**
+- Eigenvalues constrained to unit circle (bounded memory)
+- Stores slow harmonics (low frequencies) and entity slots (objects, speakers)
+- Updated once per sliding-window shift
+- Provides the "carry state" that persists across streaming windows
 
-**Initialization of ω:**
-- Sample shared atoms log-uniform over modality Nyquist range (dictated by global tick)
-- Seed per-head gates to broad low-frequency bias + small high-frequency bump
-- **Warm-start rule:**
-  1. Early epochs: freeze ω atoms, only train gates α
-  2. Then unfreeze ω atoms with small learning rate
+**Coupling with SPCE:**
+- High frequencies (ω ≈ 10³) handled by attention (fast refresh)
+- Low frequencies (ω ≈ 10⁻⁴) handled by SSM carry (stable persistence)
 
-**Backprop with differential forms:**
-- Treat SPCE as `θ = ωt` with optional chirp (no ODE integration needed)
-- For SSM carry: use diagonal state space with closed-form update:
-  ```
-  x_next = exp(-aΔt) ⊙ (b·x + gain·u)
-  ```
-- Backprop through `exp` with stable Padé or series approximations
-- Use precomputed lookup for common Δt
+### 3. Keyframes
 
-### 6. Computational Efficiency
+**Periodic anchors at fixed interval T seconds** (e.g., every 2-5 seconds):
 
-**Phase field updates:**
-- `θ(t + Δt)` from absolute `ωt` is one fused op per head
-- Precompute `ωt` per block of tokens
-- Cache `(cos, sin)` for small tile of `t`, reuse across heads with different ω
-  - Angle addition tables for small ω grid (if memory allows)
-  - Otherwise: compute directly with range reduction
+```
+[KEYFRAME] <cam_pose> <object_ids> <θ̂_anchor>
+```
 
-**Attention in continuous space:**
-- SPCE reduces to rotary-style complex multiply with head-specific ω
-- Attention kernel remains standard scaled dot-product on rotated Q, K
-- For very long windows:
-  - Combine block-sparse attention with low-rank kernel attention
-  - Use FAVOR-style random features to approximate softmax on rotated features
+**Purpose:**
+- Refresh slow phase anchors (`θ̂`)
+- Store camera pose, object IDs, lighting state
+- Enforce drift penalty (loss term: `|θ̂_predicted - ω·t|`)
+- Enable safe rewind/resume mid-stream
 
-**Custom CUDA kernels:**
-
-Fused operations to write:
-1. Rotary with per-token ω and per-head ω gates
-2. Tick-gated rotary (reads `[TICK]` anchors and phase offsets)
-3. Complex-safe LayerNorm (avoid phase-amplitude drift)
-4. Diagonal SSM update per window shift (`float32` with `float64` accumulator)
-
-**Implementation plan:**
-- Start with Triton to prototype fused rotary + gate
-- Move to CUDA with explicit vectorization (half-precision inputs, float accumulation)
-- **Profile memory bandwidth first** (rotary multiply is memory-bound)
-- Use shared memory tiles, align to cache lines
-
-### 7. Guardrails and Keyframes
-
-**Keyframes:**
-- Emit scheduled `[KEYFRAME]` tokens every N ticks
-- Store: camera pose, speaker ID, lighting, slow phase anchor `θ̂`
-- Loss term penalizes deviation between carry-predicted `θ̂` and `ωt` at keyframes
-- During generation: allow small corrections at keyframes to prevent long-tail drift
-
-**Spectral regularization:**
-- L1 on high-frequency gate mass per head (bias toward parsimonious ω use)
-- Total variation on gates across layers (keep frequencies consistent through depth)
-- Soft cap on chirp magnitude
+**During training**: Keyframes provide supervision for SSM carry
+**During inference**: Small corrections at keyframes prevent long-tail drift
 
 ---
 
-## Minimal Viable SPCE Recipe
+## Training Pipeline
 
-1. Global tick and `[TICK]` tokens
-2. Absolute phase compute: `θ = ωt`
-3. Complex rotary apply with per-head ω gates
-4. Shared ω atoms: `K = 12` per pool, two pools
-5. Scheduled keyframes every few seconds with slow phase anchors in carry
-6. Diagonal SSM carry for low frequencies only
-7. Next-token prediction on interleaved multimodal streams
+### Curriculum
+
+**Stage 1: Captioned lecture videos** (static scenes)
+- Math lessons with voiceover + whiteboard
+- Synchronized captions and equation overlays
+- Focus: audio-text alignment, long-form reasoning
+
+**Stage 2: Physics simulation videos** (dynamic scenes)
+- Unreal Engine: projectile motion, collisions, rigid body dynamics
+- Force vectors, velocity arrows, trajectory overlays
+- Focus: visual dynamics, spatial reasoning, physics grounding
+
+**Stage 3: Mixed datasets**
+- Combined lectures + simulations
+- Transfer learning and generalization
+- Real-world educational content (Khan Academy, MIT OCW, etc.)
+
+### Input Structure
+
+Tokens are packed in **tick order** (1 tick ≈ 1/960 ms):
+
+```
+[TICK_0000] [KEYFRAME] <cam_pose> <speaker_id>
+[TICK_0001] <video_patch_1> <audio_sample_1>
+[TICK_0002] <video_patch_2> <audio_sample_2> <caption_word_1>
+[TICK_0003] <video_patch_3> <audio_sample_3>
+...
+[TICK_1920] [KEYFRAME] <cam_pose> <object_pose_ball>
+[TICK_1921] <force_vector> <velocity_arrow>
+...
+```
+
+**Modality-specific encodings:**
+- **Video**: Patch tokens @ 30fps → ticks with frame offset
+- **Audio**: Waveform samples @ 16kHz → ticks with zero offset
+- **Text**: Caption words with narrator timestamps → tick-aligned
+- **Physics overlays**: Force vectors, equations → tick-aligned with video
+
+**Key tokens:**
+- `[TICK]`: Hard anchor for phase (emitted every N ticks)
+- `[KEYFRAME]`: Store state, refresh anchors
+- `<cam_pose>`, `<object_pose>`: 3D spatial grounding
+- `<force_vector>`, `<equation>`: Physics annotations
+
+---
+
+## Simplified Implementation
+
+### SPCE Core
+
+**1. Shared ω atoms** (12–24 per pool, 2 pools: low + high freq)
+```python
+ω_low = log_uniform(1e-4, 1)     # Slow harmonics
+ω_high = log_uniform(1, 1e3)     # Fast dynamics
+```
+
+**2. Per-head gates** (softmax-constrained mixture)
+```python
+ω_head = Σₖ softmax(α_head)[k] · ω_k
+```
+
+**3. Absolute phase**
+```python
+θ = ω_head · t  # Direct computation, no drift
+rotary_apply(Q, K, θ)  # Standard RoPE-style attention
+```
+
+### SSM Carry
+
+**Diagonal state space** (closed-form update)
+```python
+x_carry = exp(-a·Δt) * (b·x_prev + gain·input)
+```
+
+**Constraints:**
+- `a` constrained to unit circle eigenvalues
+- Low-rank projection for entity slots
+- Updated once per window shift (not per token)
+
+### Keyframes
+
+**Scheduled emission** every `T` seconds:
+```python
+if t % keyframe_interval == 0:
+    emit [KEYFRAME]
+    store cam_pose, object_ids, θ̂_anchor
+    loss += |θ̂_predicted - ω·t|  # Drift penalty
+```
 
 ---
 
 ## Success Metrics
 
-**Evals that matter:**
+**What matters for captioned physics video:**
 
-- **Phase residual** at keyframes over 4-hour runs
-- **A/V sync error** (milliseconds) over hour-long clips
-- **Identity persistence** across occlusions and scene cuts
-- **Cross-modal perplexity** and long-horizon perplexity
-- **Throughput** (tokens/sec) with fused kernels on A100 and consumer GPUs
+### Phase Stability
+- **Phase residual** at keyframes over 4-hour streaming runs
+- **Drift accumulation** (should be near-zero with absolute `θ = ω·t`)
+
+### Cross-Modal Alignment
+- **A/V sync error** (milliseconds) on hour-long lecture videos
+- **Caption timing accuracy** (word-level alignment)
+
+### Physics Understanding
+- **Force vector prediction** from video (next-token prediction on physics overlays)
+- **Trajectory extrapolation** (predict ball position from dynamics)
+- **Equation grounding** (match visual motion to symbolic equations)
+
+### Long-Horizon Reasoning
+- **Cross-modal perplexity** over multi-hour videos
+- **Identity persistence** across scene cuts, occlusions
+- **Concept transfer** from static lectures to dynamic simulations
+
+### Computational Efficiency
+- **Throughput** (tokens/sec) with fused kernels
+- **Memory footprint** during unbounded streaming
+- **Keyframe overhead** (should be <5% of total compute)
 
 ---
 
-### Essence
+## Implementation Roadmap
 
-**Do not integrate noise.** Compute phase from absolute time. Learn a tiny spectral palette and let heads gate it. Share one clock across all modalities with fractional offsets. Re-anchor with keyframes. Use fused complex rotary kernels. Keep the carry slow and stable. The rest is next-token prediction.
+### Phase 1: SPCE Validation (1–2 months)
+- Implement shared ω atoms + per-head gates in MLX/PyTorch
+- Compare SPCE vs RoPE on audio-only task (music beat prediction)
+- **Success criterion**: SPCE matches or beats RoPE on phase-sensitive tasks
 
-## Architecture Highlights
+### Phase 2: Single-Modal Streaming (2–3 months)
+- Build SSM carry for audio streaming
+- Add keyframe anchoring
+- Test on long-form podcast transcription (audio + text)
+- **Success criterion**: Unbounded streaming with <1ms drift/hour
 
-- **Cross-modal attention**: Unified attention mechanism across text, audio, and video modalities
-- **Streaming processing**: Real-time processing of multi-channel synchronized inputs
-- **Spectral phase encoding**: Continuous field embeddings that naturally align cross-modal data
-- **Multi-scale temporal sensitivity**: Per-head frequency distributions for capturing different temporal scales
+### Phase 3: Physics-Grounded Video (3–6 months)
+- Generate Unreal Engine physics datasets (100–1000 hours)
+- Train on captioned physics simulations
+- Evaluate force vector prediction and trajectory extrapolation
+- **Success criterion**: Predict physics overlays from video with >80% accuracy
 
-## Training Data
+### Phase 4: Full Multimodal (6–12 months)
+- Scale to 6B parameters with QLoRA on M4 Max
+- Train on mixed curriculum (lectures + simulations + real videos)
+- Publish results and open-source model
+- **Success criterion**: Match or exceed general-purpose VLMs on physics reasoning benchmarks
 
-- Synthesized video lessons (math, physics)
-- Photorealistic physics simulations from Unreal Engine
-- OCR-extracted text with unified representations
-- Synchronized audio, video, and text channels
+---
+
+## Why This Can Work
+
+### ✅ Grounded in Proven Principles
+
+**"Textbooks Are All You Need"** showed:
+- 1.3B model + 7B tokens curated data > 10B+ model on web data
+- Quality beats scale for reasoning tasks
+
+**SPCE** extends this to multimodal:
+- Physics simulations = "textbook quality" for video
+- Continuous phase field = natural alignment
+- Streaming SSM = unbounded context
+
+### ✅ Technically Feasible
+
+**Hardware**: 6B model trainable on M4 Max with QLoRA (~10GB VRAM)
+
+**Data**: Unreal Engine enables unlimited synthetic physics data at textbook quality
+
+**Architecture**: SPCE simplifies to RoPE-style kernels (proven, fast)
+
+### ✅ Unique Advantages
+
+**vs. Gemini/GPT-4o:**
+- Physics-grounded understanding (force, motion, causality)
+- Unbounded streaming (no context window limit)
+- Continuous phase alignment (automatic A/V sync)
+
+**vs. Academic models:**
+- Real implementation focus (not just theoretical)
+- Curated data strategy (not web-scale scraping)
+- Open-source from day one
+
+---
+
+## Essence
+
+**Do not integrate noise.** Compute phase from absolute time. Learn a tiny spectral palette and let heads gate it. Share one clock across all modalities. Re-anchor with keyframes. Use physics simulations as textbook-quality training data. The rest is next-token prediction.
+
+---
 
 ## Status
 
-🚧 This project is in active development.
+🚧 **Active Development**
+
+Current focus: SPCE prototype implementation in MLX
+
+---
+
+## References
+
+- **Textbooks Are All You Need** (Gunasekar et al., 2023) — Quality over scale for code generation
+- **Textbooks Are All You Need II** (Li et al., 2023) — Phi-1.5 for natural language
+- **Phi-2** (Microsoft Research, 2023) — 2.7B model matching 25× larger models
+- **Mamba** (Gu & Dao, 2023) — Linear-time SSMs for unbounded sequences
+- **RoFormer** (Su et al., 2021) — Rotary position embeddings
