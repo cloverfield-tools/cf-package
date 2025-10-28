@@ -823,4 +823,4 @@ While these approaches use:
 - **Physics-grounded coordinates** from Unreal Engine timesteps
 - **Unbounded streaming** with SSM carry and keyframe anchoring
 
-Closest analogy: **Gemini's unified backbone + RoPE's rotary encoding + FNO's spectral learning + SIREN's continuous coordinates**, unified for multimodal streaming.
+Closest analogy: **Gemini's unified backbone + FNO's spectral learning + SIREN's continuous coordinates**, with **SPCE as the rotary encoding** (replacing RoPE with continuous time), unified for multimodal streaming.
